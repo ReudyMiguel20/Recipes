@@ -1,12 +1,18 @@
 package recipes.BusinessLogic;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Recipe {
+    private int id;
     private String name;
     private String description;
-    private String ingredients;
-    private String directions;
+    private ArrayList<String> ingredients;
+    private ArrayList<String> directions;
 
     public Recipe() {
     }
@@ -14,9 +20,10 @@ public class Recipe {
     public Recipe(String name, String description, String ingredients, String directions) {
         this.name = name;
         this.description = description;
-        this.ingredients = ingredients;
-        this.directions = directions;
+        this.ingredients = new ArrayList<>(List.of(ingredients));
+        this.directions = new ArrayList<>(List.of(directions));
     }
+
 
     public String getName() {
         return name;
@@ -26,6 +33,7 @@ public class Recipe {
         this.name = name;
     }
 
+
     public String getDescription() {
         return description;
     }
@@ -34,19 +42,21 @@ public class Recipe {
         this.description = description;
     }
 
-    public String getIngredients() {
+
+    public ArrayList<String> getIngredients() {
         return ingredients;
     }
 
-    public void setIngredients(String ingredients) {
+    public void setIngredients(ArrayList<String> ingredients) {
         this.ingredients = ingredients;
     }
 
-    public String getDirections() {
+
+    public ArrayList<String> getDirections() {
         return directions;
     }
 
-    public void setDirections(String directions) {
+    public void setDirections(ArrayList<String> directions) {
         this.directions = directions;
     }
 

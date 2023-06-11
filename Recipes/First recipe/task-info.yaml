@@ -170,15 +170,6 @@ files:
         implementation 'org.springframework.boot:spring-boot-starter-web'
     }
   learner_created: false
-- name: src/recipes/Rest/RecipesRest.java
-  visible: true
-  learner_created: true
-- name: src/recipes/BusinessLogic/Recipe.java
-  visible: true
-  learner_created: true
 feedback_link: https://hyperskill.org/projects/180/stages/917/implement#comment
 status: Solved
-feedback:
-  message: Congratulations!
-  time: "Sat, 10 Jun 2023 23:08:13 UTC"
 record: 1
