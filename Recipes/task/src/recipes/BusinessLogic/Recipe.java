@@ -1,17 +1,37 @@
 package recipes.BusinessLogic;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Entity(name = "Recipes")
+@Table(name = "Recipes")
 public class Recipe {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+
+    @Column(name = "name")
+    @NotBlank
     private String name;
+
+    @Column(name = "description")
+    @NotBlank
     private String description;
+
+    @Column(name = "ingredients")
+    @Size(min = 1)
+    @NotNull
     private ArrayList<String> ingredients;
+
+    @Column(name = "directions")
+    @Size(min = 1)
+    @NotNull
     private ArrayList<String> directions;
 
     public Recipe() {
@@ -24,6 +44,14 @@ public class Recipe {
         this.directions = new ArrayList<>(List.of(directions));
     }
 
+    @JsonIgnore
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -33,7 +61,6 @@ public class Recipe {
         this.name = name;
     }
 
-
     public String getDescription() {
         return description;
     }
@@ -42,7 +69,6 @@ public class Recipe {
         this.description = description;
     }
 
-
     public ArrayList<String> getIngredients() {
         return ingredients;
     }
@@ -50,7 +76,6 @@ public class Recipe {
     public void setIngredients(ArrayList<String> ingredients) {
         this.ingredients = ingredients;
     }
-
 
     public ArrayList<String> getDirections() {
         return directions;

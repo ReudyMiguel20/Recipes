@@ -2,7 +2,7 @@ type: edu
 files:
 - name: src/recipes/RecipesApplication.java
   visible: true
-  text: |
+  text: |-
     package recipes;
 
     import org.springframework.boot.SpringApplication;
@@ -21,6 +21,22 @@ files:
     server.port=8881
     management.endpoints.web.exposure.include=*
     management.endpoint.shutdown.enabled=true
+
+    # Setting up the H2 Database
+    spring.datasource.driverClassName=org.h2.Driver
+    spring.datasource.url=jdbc:h2:file:~/recipes_db
+    spring.datasource.username=sa
+    spring.datasource.password=sa
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+    # Enabling the H2 Console, so it can run our application and use the console functionality
+    spring.h2.console.enabled=true
+    spring.h2.console.settings.trace=false
+
+
+    # This is to work with the database as an in-memory database.
+    #spring.datasource.url=jdbc:h2:mem:testdb
   learner_created: false
 - name: build.gradle
   visible: true
@@ -49,30 +65,71 @@ files:
 
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-jdbc'          //for H2 database
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'    //for H2 database
+        implementation 'com.h2database:h2'      //for H2 database
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'       // for 'shutdown' command
+        implementation 'org.springframework.boot:spring-boot-starter-validation'     // for @NotBlank and @NotEmpty validation of your fields in your Recipes object
     }
   learner_created: false
-- name: src/recipes/Rest/RecipeController.java
+- name: src/recipes/Rest/RecipesRest.java
   visible: true
   text: |
     package recipes.Rest;
 
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
     import recipes.BusinessLogic.Recipe;
+    import recipes.DAO.RecipeDAOImpl;
+
+    import javax.validation.Valid;
 
     @RestController
+    @RequestMapping("/api/recipe")
     public class RecipesRest {
-        Recipe mainRecipe = null;
+        private RecipeDAOImpl recipeDAOImpl;
 
-        @PostMapping("/api/recipe")
-        public void addRecipe(@RequestBody Recipe recipe) {
-            mainRecipe = recipe;
+        @Autowired
+        public RecipesRest(RecipeDAOImpl recipeDAOImpl) {
+            this.recipeDAOImpl = recipeDAOImpl;
         }
 
-        @GetMapping("/api/recipe")
-        public Recipe getRecipe() {
-            return mainRecipe;
+        @PostMapping("/new")
+        public ResponseEntity<?> addRecipe(@Valid @RequestBody Recipe recipe) {
+            this.recipeDAOImpl.save(recipe);
+            return ResponseEntity.ok().body("{\n \"id\": " + recipe.getId() + "\n}");
+        }
+
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getRecipe(@PathVariable int id) {
+            Recipe checkRecipe = null;
+            checkRecipe = this.recipeDAOImpl.readRecipeByID(id);
+
+            if (checkRecipe == null) {
+                return ResponseEntity.status(404).build();
+            } else {
+                return ResponseEntity.ok().body(checkRecipe);
+            }
+        }
+
+        @DeleteMapping("/{id}")
+        public ResponseEntity<?> deleteRecipe(@PathVariable int id) {
+            Recipe checkRecipe = null;
+            checkRecipe = this.recipeDAOImpl.readRecipeByID(id);
+
+            if (checkRecipe == null) {
+                return ResponseEntity.status(404).build();
+            } else {
+                this.recipeDAOImpl.delete(id);
+                return ResponseEntity.status(204).build();
+            }
+        }
+
+        @DeleteMapping
+        public void deleteAll() {
+            this.recipeDAOImpl.deleteAll();
         }
 
     }
@@ -82,13 +139,39 @@ files:
   text: |
     package recipes.BusinessLogic;
 
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import javax.persistence.*;
+    import javax.validation.constraints.*;
+    import java.util.ArrayList;
+    import java.util.List;
     import java.util.Objects;
 
+    @Entity(name = "Recipes")
+    @Table(name = "Recipes")
     public class Recipe {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @Column(name = "id")
+        private int id;
+
+        @Column(name = "name")
+        @NotBlank
         private String name;
+
+        @Column(name = "description")
+        @NotBlank
         private String description;
-        private String ingredients;
-        private String directions;
+
+        @Column(name = "ingredients")
+        @Size(min = 1)
+        @NotNull
+        private ArrayList<String> ingredients;
+
+        @Column(name = "directions")
+        @Size(min = 1)
+        @NotNull
+        private ArrayList<String> directions;
 
         public Recipe() {
         }
@@ -96,8 +179,17 @@ files:
         public Recipe(String name, String description, String ingredients, String directions) {
             this.name = name;
             this.description = description;
-            this.ingredients = ingredients;
-            this.directions = directions;
+            this.ingredients = new ArrayList<>(List.of(ingredients));
+            this.directions = new ArrayList<>(List.of(directions));
+        }
+
+        @JsonIgnore
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
         }
 
         public String getName() {
@@ -116,19 +208,19 @@ files:
             this.description = description;
         }
 
-        public String getIngredients() {
+        public ArrayList<String> getIngredients() {
             return ingredients;
         }
 
-        public void setIngredients(String ingredients) {
+        public void setIngredients(ArrayList<String> ingredients) {
             this.ingredients = ingredients;
         }
 
-        public String getDirections() {
+        public ArrayList<String> getDirections() {
             return directions;
         }
 
-        public void setDirections(String directions) {
+        public void setDirections(ArrayList<String> directions) {
             this.directions = directions;
         }
 
@@ -154,6 +246,119 @@ files:
                     ", directions='" + directions + '\'' +
                     '}';
         }
+    }
+  learner_created: false
+- name: src/recipes/BusinessLogic/RecipeStorage.java
+  visible: true
+  text: |
+    //package recipes.BusinessLogic;
+    //
+    //import com.fasterxml.jackson.annotation.JsonIgnore;
+    //import org.springframework.stereotype.Component;
+    //import javax.persistence.Entity;
+    //import javax.persistence.Table;
+    //import java.util.HashMap;
+    //import java.util.concurrent.ConcurrentHashMap;
+    //import java.util.concurrent.ConcurrentMap;
+    //
+    //@Component
+    //public class RecipeStorage {
+    //    private int id;
+    //    private ConcurrentMap<Integer, Recipe> recipeStorage;
+    //
+    //    public RecipeStorage() {
+    //        this.id = 0;
+    //        recipeStorage = new ConcurrentHashMap<>();
+    //    }
+    //
+    //    public int getId() {
+    //        return id;
+    //    }
+    //
+    //    public Recipe getRecipeById(int id) {
+    //        return this.recipeStorage.get(id - 1);
+    //    }
+    //
+    //    public void addRecipe(Recipe recipe) {
+    //        this.recipeStorage.put(this.id++, recipe);
+    //    }
+    //
+    //    @Override
+    //    public String toString() {
+    //        return "RecipeStorage{" +
+    //                "id=" + id +
+    //                ", recipeStorage=" + recipeStorage +
+    //                '}';
+    //    }
+    //}
+  learner_created: false
+- name: src/recipes/DAO/RecipeDAO.java
+  visible: true
+  text: |
+    package recipes.DAO;
+
+
+    import recipes.BusinessLogic.Recipe;
+
+
+    public interface RecipeDAO  {
+        void save(Recipe recipe);
+
+        Recipe readRecipeByID(Integer id);
+
+        void delete(Integer id);
+
+        void deleteAll();
+
+    }
+  learner_created: false
+- name: src/recipes/DAO/RecipeDAOImpl.java
+  visible: true
+  text: |
+    package recipes.DAO;
+
+    import javax.persistence.EntityManager;
+    import javax.persistence.PersistenceContext;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Repository;
+    import org.springframework.transaction.annotation.Transactional;
+    import recipes.BusinessLogic.Recipe;
+
+    @Repository
+    public class RecipeDAOImpl implements RecipeDAO {
+
+        @PersistenceContext
+        private EntityManager entityManager;
+
+        @Autowired
+        public RecipeDAOImpl(EntityManager entityManager) {
+            this.entityManager = entityManager;
+        }
+
+        @Override
+        @Transactional
+        public void save(Recipe recipe) {
+            this.entityManager.persist(recipe);
+        }
+
+        @Override
+        public Recipe readRecipeByID(Integer id) {
+            return this.entityManager.find(Recipe.class, id);
+        }
+
+        @Override
+        @Transactional
+        public void delete(Integer id) {
+            Recipe tempRecipe = this.entityManager.find(Recipe.class, id);
+            this.entityManager.remove(tempRecipe);
+        }
+
+        @Override
+        @Transactional
+        public void deleteAll() {
+            this.entityManager.createQuery("DELETE FROM Recipes").executeUpdate();
+        }
+
     }
   learner_created: false
 - name: test/RecipesApplicationTest.java
@@ -917,6 +1122,6 @@ files:
         }
     }
   learner_created: false
-feedback_link: https://hyperskill.org/projects/180/stages/921/implement#comment
+feedback_link: https://hyperskill.org/learn/step/13092#comment
 status: Unchecked
 record: -1

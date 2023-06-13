@@ -3,7 +3,7 @@ custom_name: Sort & update
 files:
 - name: src/recipes/RecipesApplication.java
   visible: true
-  text: |
+  text: |-
     package recipes;
 
     import org.springframework.boot.SpringApplication;
@@ -22,6 +22,22 @@ files:
     server.port=8881
     management.endpoints.web.exposure.include=*
     management.endpoint.shutdown.enabled=true
+
+    # Setting up the H2 Database
+    spring.datasource.driverClassName=org.h2.Driver
+    spring.datasource.url=jdbc:h2:file:~/recipes_db
+    spring.datasource.username=sa
+    spring.datasource.password=sa
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+    # Enabling the H2 Console, so it can run our application and use the console functionality
+    spring.h2.console.enabled=true
+    spring.h2.console.settings.trace=false
+
+
+    # This is to work with the database as an in-memory database.
+    #spring.datasource.url=jdbc:h2:mem:testdb
   learner_created: false
 - name: build.gradle
   visible: true
@@ -50,111 +66,12 @@ files:
 
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-web'
-    }
-  learner_created: false
-- name: src/recipes/Rest/RecipeController.java
-  visible: true
-  text: |
-    package recipes.Rest;
-
-    import org.springframework.web.bind.annotation.*;
-    import recipes.BusinessLogic.Recipe;
-
-    @RestController
-    public class RecipesRest {
-        Recipe mainRecipe = null;
-
-        @PostMapping("/api/recipe")
-        public void addRecipe(@RequestBody Recipe recipe) {
-            mainRecipe = recipe;
-        }
-
-        @GetMapping("/api/recipe")
-        public Recipe getRecipe() {
-            return mainRecipe;
-        }
-
-    }
-  learner_created: false
-- name: src/recipes/BusinessLogic/Recipe.java
-  visible: true
-  text: |
-    package recipes.BusinessLogic;
-
-    import java.util.Objects;
-
-    public class Recipe {
-        private String name;
-        private String description;
-        private String ingredients;
-        private String directions;
-
-        public Recipe() {
-        }
-
-        public Recipe(String name, String description, String ingredients, String directions) {
-            this.name = name;
-            this.description = description;
-            this.ingredients = ingredients;
-            this.directions = directions;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getIngredients() {
-            return ingredients;
-        }
-
-        public void setIngredients(String ingredients) {
-            this.ingredients = ingredients;
-        }
-
-        public String getDirections() {
-            return directions;
-        }
-
-        public void setDirections(String directions) {
-            this.directions = directions;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Recipe recipes = (Recipe) o;
-            return Objects.equals(name, recipes.name) && Objects.equals(description, recipes.description) && Objects.equals(ingredients, recipes.ingredients) && Objects.equals(directions, recipes.directions);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name, description, ingredients, directions);
-        }
-
-        @Override
-        public String toString() {
-            return "Recipes{" +
-                    "name='" + name + '\'' +
-                    ", description='" + description + '\'' +
-                    ", ingredients='" + ingredients + '\'' +
-                    ", directions='" + directions + '\'' +
-                    '}';
-        }
+        implementation 'org.springframework.boot:spring-boot-starter-jdbc'          //for H2 database
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'    //for H2 database
+        implementation 'com.h2database:h2'      //for H2 database
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'       // for 'shutdown' command
+        implementation 'org.springframework.boot:spring-boot-starter-validation'     // for @NotBlank and @NotEmpty validation of your fields in your Recipes object
     }
   learner_created: false
 - name: test/RecipesApplicationTest.java
@@ -738,6 +655,42 @@ files:
         }
     }
   learner_created: false
-feedback_link: https://hyperskill.org/projects/180/stages/920/implement#comment
+- name: src/RecipeStorage.java
+  visible: true
+  learner_created: true
+- name: src/se.java
+  visible: true
+  learner_created: true
+- name: src/RecipeDAOImpl.java
+  visible: true
+  learner_created: true
+- name: src/RecipeDAO.java
+  visible: true
+  learner_created: true
+- name: src/Recipe.java
+  visible: true
+  learner_created: true
+- name: src/RecipesApplication.java
+  visible: true
+  learner_created: true
+- name: src/RecipesRest.java
+  visible: true
+  learner_created: true
+- name: src/recipes/Rest/RecipesRest.java
+  visible: true
+  learner_created: true
+- name: src/recipes/BusinessLogic/RecipeStorage.java
+  visible: true
+  learner_created: true
+- name: src/recipes/BusinessLogic/Recipe.java
+  visible: true
+  learner_created: true
+- name: src/recipes/DAO/RecipeDAOImpl.java
+  visible: true
+  learner_created: true
+- name: src/recipes/DAO/RecipeDAO.java
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/learn/step/13091#comment
 status: Unchecked
-record: -1
+record: 4

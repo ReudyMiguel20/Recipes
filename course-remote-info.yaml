@@ -3,7 +3,7 @@ hyperskill_project:
   ide_files: https://cogniterra.org/media/attachments/lesson/25525/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: "Thu, 01 Jan 1970 00:00:00 UTC"
+update_date: "Tue, 13 Jun 2023 17:39:33 UTC"
 stages:
 - id: 917
   step: 13088
@@ -13,7 +13,7 @@ stages:
   is_completed: true
 - id: 919
   step: 13090
-  is_completed: false
+  is_completed: true
 - id: 920
   step: 13091
   is_completed: false
@@ -412,6 +412,8 @@ topics:
     theory_id: 17787
   - title: Cascade operations
     theory_id: 27502
+  - title: Embeddable and ElementCollection
+    theory_id: 29504
   - title: Inner classes
     theory_id: 11505
   3:
