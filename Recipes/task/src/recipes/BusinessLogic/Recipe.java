@@ -1,10 +1,13 @@
 package recipes.BusinessLogic;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Entity(name = "Recipes")
@@ -19,6 +22,13 @@ public class Recipe {
     @Column(name = "name")
     @NotBlank
     private String name;
+
+    @Column(name = "category")
+    @NotBlank
+    private String category;
+
+    @Column(name = "date")
+    private LocalDateTime date;
 
     @Column(name = "description")
     @NotBlank
@@ -37,11 +47,12 @@ public class Recipe {
     public Recipe() {
     }
 
-    public Recipe(String name, String description, String ingredients, String directions) {
+    public Recipe(String name, String category, String description, ArrayList<String> ingredients, ArrayList<String> directions) {
         this.name = name;
+        this.category = category;
         this.description = description;
-        this.ingredients = new ArrayList<>(List.of(ingredients));
-        this.directions = new ArrayList<>(List.of(directions));
+        this.ingredients = ingredients;
+        this.directions = directions;
     }
 
     @JsonIgnore
@@ -59,6 +70,22 @@ public class Recipe {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
     }
 
     public String getDescription() {

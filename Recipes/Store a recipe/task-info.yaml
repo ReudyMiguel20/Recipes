@@ -308,24 +308,6 @@ files:
         }
     }
   learner_created: false
-- name: src/recipes/BusinessLogic/Recipe.java
-  visible: true
-  learner_created: true
-- name: src/recipes/DAO/RecipeDAO.java
-  visible: true
-  learner_created: true
-- name: src/recipes/DAO/RecipeDAOImpl.java
-  visible: true
-  learner_created: true
-- name: src/recipes/Rest/RecipesRest.java
-  visible: true
-  learner_created: true
-- name: src/recipes/BusinessLogic/RecipeStorage.java
-  visible: true
-  learner_created: true
-feedback_link: https://hyperskill.org/learn/step/13090#comment
+feedback_link: https://hyperskill.org/projects/180/stages/919/implement#comment
 status: Solved
-feedback:
-  message: Congratulations!
-  time: "Tue, 13 Jun 2023 17:53:50 UTC"
 record: 3

@@ -78,13 +78,17 @@ files:
   text: |
     package recipes.Rest;
 
+    import com.fasterxml.jackson.annotation.JsonUnwrapped;
     import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.annotation.Lazy;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
     import recipes.BusinessLogic.Recipe;
     import recipes.DAO.RecipeDAOImpl;
 
     import javax.validation.Valid;
+    import java.time.LocalDateTime;
+    import java.util.List;
 
     @RestController
     @RequestMapping("/api/recipe")
@@ -98,14 +102,18 @@ files:
 
         @PostMapping("/new")
         public ResponseEntity<?> addRecipe(@Valid @RequestBody Recipe recipe) {
-            this.recipeDAOImpl.save(recipe);
+            //Setting actual date to the Recipe Object
+            LocalDateTime dateTime = LocalDateTime.now();
+            recipe.setDate(dateTime);
+
+            this.recipeDAOImpl.saveRecipe(recipe);
             return ResponseEntity.ok().body("{\n \"id\": " + recipe.getId() + "\n}");
         }
 
         @GetMapping("/{id}")
         public ResponseEntity<?> getRecipe(@PathVariable int id) {
             Recipe checkRecipe = null;
-            checkRecipe = this.recipeDAOImpl.readRecipeByID(id);
+            checkRecipe = this.recipeDAOImpl.getByID(id);
 
             if (checkRecipe == null) {
                 return ResponseEntity.status(404).build();
@@ -114,10 +122,46 @@ files:
             }
         }
 
+        @GetMapping("/search")
+        public ResponseEntity<?> recipeList (@RequestParam(required = false) String category, @RequestParam(required = false) String name) {
+            if (category != null) {
+                List<Recipe> tempRecipeList = this.recipeDAOImpl.getRecipesByCategory(category);
+
+                if (tempRecipeList.isEmpty()) {
+                    return ResponseEntity.badRequest().build();
+                }
+
+                return ResponseEntity.ok().body(tempRecipeList);
+            } else if (name != null) {
+                List<Recipe> tempRecipeList = this.recipeDAOImpl.getRecipesByName(name);
+
+                if (tempRecipeList.isEmpty()) {
+                    return ResponseEntity.badRequest().build();
+                }
+
+                return ResponseEntity.ok().body(tempRecipeList);
+            }
+            return ResponseEntity.badRequest().build();
+
+        }
+
+        @PutMapping("/{id}")
+        public ResponseEntity<?> updateRecipe(@PathVariable int id, @RequestBody Recipe newRecipe) {
+            Recipe oldRecipe = null;
+            oldRecipe = this.recipeDAOImpl.getByID(id);
+
+            if (oldRecipe != null) {
+                this.recipeDAOImpl.updateRecipe(oldRecipe, newRecipe);
+                return ResponseEntity.status(204).build();
+            }
+
+            return ResponseEntity.status(404).build();
+        }
+
         @DeleteMapping("/{id}")
         public ResponseEntity<?> deleteRecipe(@PathVariable int id) {
             Recipe checkRecipe = null;
-            checkRecipe = this.recipeDAOImpl.readRecipeByID(id);
+            checkRecipe = this.recipeDAOImpl.getByID(id);
 
             if (checkRecipe == null) {
                 return ResponseEntity.status(404).build();
@@ -134,16 +178,63 @@ files:
 
     }
   learner_created: false
+- name: src/recipes/BusinessLogic/RecipeStorage.java
+  visible: true
+  text: |
+    //package recipes.BusinessLogic;
+    //
+    //import com.fasterxml.jackson.annotation.JsonIgnore;
+    //import org.springframework.stereotype.Component;
+    //import javax.persistence.Entity;
+    //import javax.persistence.Table;
+    //import java.util.HashMap;
+    //import java.util.concurrent.ConcurrentHashMap;
+    //import java.util.concurrent.ConcurrentMap;
+    //
+    //@Component
+    //public class RecipeStorage {
+    //    private int id;
+    //    private ConcurrentMap<Integer, Recipe> recipeStorage;
+    //
+    //    public RecipeStorage() {
+    //        this.id = 0;
+    //        recipeStorage = new ConcurrentHashMap<>();
+    //    }
+    //
+    //    public int getId() {
+    //        return id;
+    //    }
+    //
+    //    public Recipe getRecipeById(int id) {
+    //        return this.recipeStorage.get(id - 1);
+    //    }
+    //
+    //    public void addRecipe(Recipe recipe) {
+    //        this.recipeStorage.put(this.id++, recipe);
+    //    }
+    //
+    //    @Override
+    //    public String toString() {
+    //        return "RecipeStorage{" +
+    //                "id=" + id +
+    //                ", recipeStorage=" + recipeStorage +
+    //                '}';
+    //    }
+    //}
+  learner_created: false
 - name: src/recipes/BusinessLogic/Recipe.java
   visible: true
   text: |
     package recipes.BusinessLogic;
 
     import com.fasterxml.jackson.annotation.JsonIgnore;
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
     import javax.persistence.*;
     import javax.validation.constraints.*;
+    import java.time.LocalDateTime;
     import java.util.ArrayList;
-    import java.util.List;
     import java.util.Objects;
 
     @Entity(name = "Recipes")
@@ -158,6 +249,13 @@ files:
         @Column(name = "name")
         @NotBlank
         private String name;
+
+        @Column(name = "category")
+        @NotBlank
+        private String category;
+
+        @Column(name = "date")
+        private LocalDateTime date;
 
         @Column(name = "description")
         @NotBlank
@@ -176,11 +274,12 @@ files:
         public Recipe() {
         }
 
-        public Recipe(String name, String description, String ingredients, String directions) {
+        public Recipe(String name, String category, String description, ArrayList<String> ingredients, ArrayList<String> directions) {
             this.name = name;
+            this.category = category;
             this.description = description;
-            this.ingredients = new ArrayList<>(List.of(ingredients));
-            this.directions = new ArrayList<>(List.of(directions));
+            this.ingredients = ingredients;
+            this.directions = directions;
         }
 
         @JsonIgnore
@@ -198,6 +297,22 @@ files:
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public LocalDateTime getDate() {
+            return date;
+        }
+
+        public void setDate(LocalDateTime date) {
+            this.date = date;
         }
 
         public String getDescription() {
@@ -248,87 +363,30 @@ files:
         }
     }
   learner_created: false
-- name: src/recipes/BusinessLogic/RecipeStorage.java
-  visible: true
-  text: |
-    //package recipes.BusinessLogic;
-    //
-    //import com.fasterxml.jackson.annotation.JsonIgnore;
-    //import org.springframework.stereotype.Component;
-    //import javax.persistence.Entity;
-    //import javax.persistence.Table;
-    //import java.util.HashMap;
-    //import java.util.concurrent.ConcurrentHashMap;
-    //import java.util.concurrent.ConcurrentMap;
-    //
-    //@Component
-    //public class RecipeStorage {
-    //    private int id;
-    //    private ConcurrentMap<Integer, Recipe> recipeStorage;
-    //
-    //    public RecipeStorage() {
-    //        this.id = 0;
-    //        recipeStorage = new ConcurrentHashMap<>();
-    //    }
-    //
-    //    public int getId() {
-    //        return id;
-    //    }
-    //
-    //    public Recipe getRecipeById(int id) {
-    //        return this.recipeStorage.get(id - 1);
-    //    }
-    //
-    //    public void addRecipe(Recipe recipe) {
-    //        this.recipeStorage.put(this.id++, recipe);
-    //    }
-    //
-    //    @Override
-    //    public String toString() {
-    //        return "RecipeStorage{" +
-    //                "id=" + id +
-    //                ", recipeStorage=" + recipeStorage +
-    //                '}';
-    //    }
-    //}
-  learner_created: false
-- name: src/recipes/DAO/RecipeDAO.java
+- name: src/recipes/DAO/RecipeService.java
   visible: true
   text: |
     package recipes.DAO;
 
-
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.annotation.Lazy;
+    import org.springframework.stereotype.Repository;
+    import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
     import recipes.BusinessLogic.Recipe;
-
-
-    public interface RecipeDAO  {
-        void save(Recipe recipe);
-
-        Recipe readRecipeByID(Integer id);
-
-        void delete(Integer id);
-
-        void deleteAll();
-
-    }
-  learner_created: false
-- name: src/recipes/DAO/RecipeDAOImpl.java
-  visible: true
-  text: |
-    package recipes.DAO;
 
     import javax.persistence.EntityManager;
     import javax.persistence.PersistenceContext;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.stereotype.Repository;
-    import org.springframework.transaction.annotation.Transactional;
-    import recipes.BusinessLogic.Recipe;
+    import javax.persistence.TypedQuery;
+    import java.time.LocalDateTime;
+    import java.util.List;
 
     @Repository
     public class RecipeDAOImpl implements RecipeDAO {
 
         @PersistenceContext
         private EntityManager entityManager;
+
 
         @Autowired
         public RecipeDAOImpl(EntityManager entityManager) {
@@ -337,17 +395,17 @@ files:
 
         @Override
         @Transactional
-        public void save(Recipe recipe) {
+        public void saveRecipe(Recipe recipe) {
             this.entityManager.persist(recipe);
         }
 
         @Override
-        public Recipe readRecipeByID(Integer id) {
+        public Recipe getByID(Integer id) {
             return this.entityManager.find(Recipe.class, id);
         }
 
-        @Override
         @Transactional
+        @Override
         public void delete(Integer id) {
             Recipe tempRecipe = this.entityManager.find(Recipe.class, id);
             this.entityManager.remove(tempRecipe);
@@ -359,7 +417,114 @@ files:
             this.entityManager.createQuery("DELETE FROM Recipes").executeUpdate();
         }
 
+        @Override
+        @Transactional
+        public void updateRecipe(Recipe oldRecipe, Recipe newRecipe) {
+            LocalDateTime dateTime = LocalDateTime.now();
+
+            oldRecipe.setName(newRecipe.getName());
+            oldRecipe.setCategory(newRecipe.getCategory());
+            oldRecipe.setDescription(newRecipe.getDescription());
+            oldRecipe.setIngredients(newRecipe.getIngredients());
+            oldRecipe.setDirections(newRecipe.getDirections());
+            oldRecipe.setDate(dateTime);
+        }
+
+        public List<Recipe> getRecipesByCategory(String category) {
+            TypedQuery<Recipe> findQuery = this.entityManager.createQuery("FROM Recipes WHERE category = :category ORDER BY date desc", Recipe.class);
+
+            findQuery.setParameter("category", category);
+
+            return findQuery.getResultList();
+        }
+
+        @Override
+        public List<Recipe> getRecipesByName(String name) {
+            TypedQuery<Recipe> findQuery = this.entityManager.createQuery("FROM Recipes WHERE name = :name ORDER BY date desc", Recipe.class);
+
+            findQuery.setParameter("name", name);
+
+            return findQuery.getResultList();
+        }
+
+
     }
+  learner_created: false
+- name: src/recipes/DAO/RecipeRepository.java
+  visible: true
+  text: |
+    package recipes.DAO;
+
+
+    import recipes.BusinessLogic.Recipe;
+
+    import java.util.List;
+
+
+    public interface RecipeDAO  {
+        void saveRecipe(Recipe recipe);
+
+        Recipe getByID(Integer id);
+
+        void delete(Integer id);
+
+        void deleteAll();
+
+        void updateRecipe(Recipe oldRecipe, Recipe newRecipe);
+
+        List<Recipe> getRecipesByCategory(String category);
+
+        List<Recipe> getRecipesByName(String name);
+
+    }
+  learner_created: false
+- name: src/recipes/BusinessLogic/RecipeListDTO.java
+  visible: true
+  text: |
+    //package recipes.BusinessLogic;
+    //
+    //import org.springframework.beans.factory.annotation.Autowired;
+    //import org.springframework.stereotype.Component;
+    //import recipes.DAO.RecipeDAOImpl;
+    //
+    //import java.util.ArrayList;
+    //import java.util.List;
+    //
+    //@Component
+    //public class RecipeListDTO {
+    //    private List<Recipe> recipeList;
+    //    private RecipeDAOImpl recipeDAOImpl;
+    //
+    //    @Autowired
+    //    public RecipeListDTO(RecipeDAOImpl recipeDAOImpl) {
+    //        this.recipeDAOImpl = recipeDAOImpl;
+    //    }
+    //
+    //    public void addRecipe(Recipe recipe) {
+    //        this.recipeList.add(recipe);
+    //    }
+    //
+    //    public void getAllRecipesByCategory(String category) {
+    //        this.recipeDAOImpl.
+    //    }
+    //
+    //    public int getSize() {
+    //        return this.recipeList.size();
+    //    }
+    //
+    //    public List<Recipe> getRecipeList() {
+    //        return recipeList;
+    //    }
+    //
+    //    public void setRecipeList(List<Recipe> recipeList) {
+    //        this.recipeList = recipeList;
+    //    }
+    //
+    //    @Override
+    //    public String toString() {
+    //        return this.recipeList.toString();
+    //    }
+    //}
   learner_created: false
 - name: test/RecipesApplicationTest.java
   visible: false
@@ -1122,6 +1287,6 @@ files:
         }
     }
   learner_created: false
-feedback_link: https://hyperskill.org/learn/step/13092#comment
+feedback_link: https://hyperskill.org/projects/180/stages/921/implement#comment
 status: Unchecked
 record: -1

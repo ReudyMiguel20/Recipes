@@ -35,7 +35,6 @@ files:
     spring.h2.console.enabled=true
     spring.h2.console.settings.trace=false
 
-
     # This is to work with the database as an in-memory database.
     #spring.datasource.url=jdbc:h2:mem:testdb
   learner_created: false
@@ -655,27 +654,6 @@ files:
         }
     }
   learner_created: false
-- name: src/RecipeStorage.java
-  visible: true
-  learner_created: true
-- name: src/se.java
-  visible: true
-  learner_created: true
-- name: src/RecipeDAOImpl.java
-  visible: true
-  learner_created: true
-- name: src/RecipeDAO.java
-  visible: true
-  learner_created: true
-- name: src/Recipe.java
-  visible: true
-  learner_created: true
-- name: src/RecipesApplication.java
-  visible: true
-  learner_created: true
-- name: src/RecipesRest.java
-  visible: true
-  learner_created: true
 - name: src/recipes/Rest/RecipesRest.java
   visible: true
   learner_created: true
@@ -685,12 +663,18 @@ files:
 - name: src/recipes/BusinessLogic/Recipe.java
   visible: true
   learner_created: true
-- name: src/recipes/DAO/RecipeDAOImpl.java
+- name: src/recipes/BusinessLogic/RecipeListDTO.java
   visible: true
   learner_created: true
-- name: src/recipes/DAO/RecipeDAO.java
+- name: src/recipes/DAO/RecipeRepository.java
   visible: true
   learner_created: true
-feedback_link: https://hyperskill.org/learn/step/13091#comment
-status: Unchecked
-record: 4
+- name: src/recipes/DAO/RecipeService.java
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/projects/180/stages/920/implement#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Wed, 14 Jun 2023 17:13:36 UTC"
+record: -1
