@@ -654,27 +654,6 @@ files:
         }
     }
   learner_created: false
-- name: src/recipes/Rest/RecipesRest.java
-  visible: true
-  learner_created: true
-- name: src/recipes/BusinessLogic/RecipeStorage.java
-  visible: true
-  learner_created: true
-- name: src/recipes/BusinessLogic/Recipe.java
-  visible: true
-  learner_created: true
-- name: src/recipes/BusinessLogic/RecipeListDTO.java
-  visible: true
-  learner_created: true
-- name: src/recipes/DAO/RecipeRepository.java
-  visible: true
-  learner_created: true
-- name: src/recipes/DAO/RecipeService.java
-  visible: true
-  learner_created: true
-feedback_link: https://hyperskill.org/projects/180/stages/920/implement#comment
+feedback_link: https://hyperskill.org/learn/step/13091#comment
 status: Solved
-feedback:
-  message: Congratulations!
-  time: "Wed, 14 Jun 2023 17:13:36 UTC"
-record: -1
+record: 4

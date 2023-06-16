@@ -1,11 +1,11 @@
 package recipes.BusinessLogic;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -16,8 +16,14 @@ public class Recipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "recipe_id")
     private int id;
+
+//    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "username", nullable = false)
+//    @Embedded
+    @JsonIgnore
+    private String user;
 
     @Column(name = "name")
     @NotBlank
@@ -55,6 +61,15 @@ public class Recipe {
         this.directions = directions;
     }
 
+    public Recipe(String name, String category, String description, ArrayList<String> ingredients, ArrayList<String> directions, String user) {
+        this.name = name;
+        this.category = category;
+        this.description = description;
+        this.ingredients = ingredients;
+        this.directions = directions;
+        this.user = user;
+    }
+
     @JsonIgnore
     public int getId() {
         return id;
@@ -62,6 +77,14 @@ public class Recipe {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 
     public String getName() {

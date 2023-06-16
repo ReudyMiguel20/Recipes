@@ -49,9 +49,11 @@ public class RecipeService implements RecipeRepository {
     @Override
     @Transactional
     public void updateRecipe(Recipe oldRecipe, Recipe newRecipe) {
+        //Updating time to the recipe
         LocalDateTime dateTime = LocalDateTime.now();
         newRecipe.setDate(dateTime);
 
+        //Updating the old recipe with the new info
         oldRecipe.setName(newRecipe.getName());
         oldRecipe.setCategory(newRecipe.getCategory());
         oldRecipe.setDate(newRecipe.getDate());

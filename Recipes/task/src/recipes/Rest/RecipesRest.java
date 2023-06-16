@@ -2,35 +2,58 @@ package recipes.Rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import recipes.BusinessLogic.Recipe;
+import recipes.BusinessLogic.User;
 import recipes.DAO.RecipeService;
+import recipes.DAO.User.UserServiceImpl;
+//import recipes.DAO.User.UserServiceImpl;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
-@RequestMapping("/api/recipe")
 public class RecipesRest {
     private RecipeService recipeDAOImpl;
+    private UserServiceImpl userService;
 
     @Autowired
-    public RecipesRest(RecipeService recipeDAOImpl) {
+    public RecipesRest(RecipeService recipeDAOImpl, UserServiceImpl userService) {
         this.recipeDAOImpl = recipeDAOImpl;
+        this.userService = userService;
     }
 
-    @PostMapping("/new")
-    public ResponseEntity<?> addRecipe(@Valid @RequestBody Recipe recipe) {
+    @PostMapping("/api/recipe/new")
+    public ResponseEntity<?> addRecipe(Authentication auth, @Valid @RequestBody Recipe recipe) {
         //Setting actual date to the Recipe Object
         LocalDateTime dateTime = LocalDateTime.now();
         recipe.setDate(dateTime);
+
+        //Set the auth username to the recipe
+        recipe.setUser(auth.getName());
 
         this.recipeDAOImpl.saveRecipe(recipe);
         return ResponseEntity.ok().body("{\n \"id\": " + recipe.getId() + "\n}");
     }
 
-    @GetMapping("/{id}")
+    @PostMapping("/api/register")
+    public ResponseEntity<?> registerNewUser(@Valid @RequestBody User user) {
+        boolean userExists = false;
+        userExists = this.userService.checkUserExists(user);
+
+        if (userExists) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            this.userService.saveUser(user);
+            return ResponseEntity.ok().build();
+        }
+    }
+
+    @GetMapping("/api/recipe/{id}")
     public ResponseEntity<?> getRecipe(@PathVariable int id) {
         Recipe checkRecipe = null;
         checkRecipe = this.recipeDAOImpl.getByID(id);
@@ -42,7 +65,7 @@ public class RecipesRest {
         }
     }
 
-    @GetMapping("/search")
+    @GetMapping("/api/recipe/search")
     public ResponseEntity<?> recipeList (@RequestParam(required = false) String category, @RequestParam(required = false) String name) {
         if (category != null) {
             List<Recipe> tempRecipeList = this.recipeDAOImpl.getRecipesByCategory(category);
@@ -66,30 +89,40 @@ public class RecipesRest {
 
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateRecipe( @PathVariable int id, @Valid @RequestBody Recipe newRecipe) {
+    @PutMapping("/api/recipe/{id}")
+    public ResponseEntity<?> updateRecipe(Authentication auth, @PathVariable int id, @Valid @RequestBody Recipe newRecipe) {
+        //Verifying that the recipe exists
         Recipe oldRecipe = null;
         oldRecipe = this.recipeDAOImpl.getByID(id);
 
         if (oldRecipe != null) {
-            this.recipeDAOImpl.updateRecipe(oldRecipe, newRecipe);
-            return ResponseEntity.status(204).build();
+            if (oldRecipe.getUser().equals(auth.getName())) {
+                this.recipeDAOImpl.updateRecipe(oldRecipe, newRecipe);
+                return ResponseEntity.status(204).build();
+            } else {
+                return ResponseEntity.status(403).build();
+            }
         }
 
         return ResponseEntity.status(404).build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteRecipe(@PathVariable int id) {
+
+    @DeleteMapping("/api/recipe/{id}")
+    public ResponseEntity<?> deleteRecipe(Authentication auth, @PathVariable int id) {
+        //Verifying that the recipe exists
         Recipe checkRecipe = null;
         checkRecipe = this.recipeDAOImpl.getByID(id);
 
         if (checkRecipe == null) {
             return ResponseEntity.status(404).build();
         } else {
-            this.recipeDAOImpl.delete(id);
-            return ResponseEntity.status(204).build();
+            if (checkRecipe.getUser().equals(auth.getName())) {
+                this.recipeDAOImpl.delete(id);
+                return ResponseEntity.status(204).build();
+            }
         }
+        return ResponseEntity.status(403).build();
     }
 
     @DeleteMapping
