@@ -1,6 +1,6 @@
 JetBrains Academy - Recipe Project
 
-![image](https://github.com/ReudyMiguel20/Recipes/assets/87297026/58bbf2e2-2295-4a3b-b58f-b1bce41f67e6)
+![68747470733a2f2f69637461636164656d792e636f6d2e6e672f77702d636f6e74656e742f75706c6f6164732f323032302f30322f3132303070782d4a6574427261696e735f4c6f676f5f323031362e7376675f2e706e67](https://github.com/ReudyMiguel20/Recipes/assets/87297026/143735d9-99a9-40fa-858c-25eb8dd22f1e)
 
 Recipe Project is a graduate project for the Java Backend Developer track.
 
@@ -18,3 +18,4 @@ Multiple Recipes: Save and Delete recipes in memory
 Store a Recipe: Save and Delete Recipes from a database
 Sort & Update: Filter results with queries
 More Chefs to the table: Learn User Authentication and authorization
+
