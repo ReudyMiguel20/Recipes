@@ -1,4 +1,4 @@
-JetBrains Academy - Recipe Project
+<h1>JetBrains Academy - Recipe Project</h1>
 
 Recipe Project is a graduate project for the Java Backend Developer track.
 
